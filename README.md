@@ -36,8 +36,6 @@ Neste App Adicionamos o calculo do percentual adotado para as construções enqu
 
 
 
-	ENTRADA DE DADOS E RESULTADO OBTIDO:
-
 	ENTRADA DE DADOS:
 
 Nome do projeto	-> 	nome adotado para vincular o projeto ao cálculo.
