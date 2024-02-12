@@ -1,5 +1,6 @@
 import base64
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 from datetime import datetime
 from docx import Document
@@ -53,13 +54,20 @@ def formata_data(nova_data):
 
 def data_indice_CUB(nova_data):
     nova_data = nova_data.split('-')
-    dic = {1: 'Janeiro',2:'Fevereiro',3: 'Março',4:"Abril", 5:"Maio", 6:"Junho", 7: 'Julho', 8:"Agosto", 9:"Setembro", 10:"Outubro", 11:"Novembro", 12:"Dezembro"}
+    calendario = {1: 'Janeiro', 2:'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'}
     mes = int(nova_data[1])
     ano = int(nova_data[2])
-    if mes in dic:
-        for chave, valor in dic.items():
-            if chave == mes:
-                return (f'{valor}/{ano}')
+
+    if mes == 1:  # voltar um ano se necessário
+        ano -= 1
+        mes = 12
+    else:
+        mes -= 1
+
+    if mes in calendario:
+        for mes_num, mes_str in calendario.items():
+            if mes_num == mes:
+                return (f'{mes_str}/{ano}')
 
 def formatar_variaveis_negrito(texto):
     # Criar um documento temporário para acessar as funcionalidades do docx
@@ -81,25 +89,31 @@ def formatar_variaveis_negrito(texto):
 
     return texto_formatado
 
-def atribuir_valor_m(): #adicionar o valor "m" para a variavel indice_CUB
-    indice_CUB_entry.delete(0, tk.END)
-    indice_CUB_entry.insert(0, 'm')
-
 def toggle_campo_fmp():
     if fmp_entry.winfo_ismapped():
         fmp_entry.grid_remove()
     else:
         fmp_entry.grid(row=1, column=2, padx=5, pady=5)
 
-def toggle_campo_CUB():
-    if indice_CUB_entry.winfo_ismapped():
-        indice_CUB_entry.grid_remove()
-        nome_indice_label.grid_remove()
+def toggle_campo_nome_CUB():
+    if nome_indice_CUB_entry.winfo_ismapped():
         nome_indice_CUB_entry.grid_remove()
     else:
-        indice_CUB_entry.grid()
-        nome_indice_label.grid()
-        nome_indice_CUB_entry.grid()
+        nome_indice_CUB_entry.grid(row=5, column=2, sticky="e", padx=5, pady=5)
+
+# INFORMAÇÃO NA CAIXA DE INDICE CUB
+def on_entry_click(event):
+    # Função chamada quando o Entry é clicado
+    if indice_CUB_entry.get() == texto_informativo:
+        indice_CUB_entry.delete(0, tk.END)
+        indice_CUB_entry.config(fg='black')  # Altera a cor do texto para preto
+
+def on_focus_out(event):
+    # Função chamada quando o Entry perde o foco
+    if not indice_CUB_entry.get():
+        indice_CUB_entry.insert(0, texto_informativo)
+        indice_CUB_entry.config(fg='grey')        
+
 
 def limpar_campos():
     nome_projeto_entry.delete(0, 'end')
@@ -112,7 +126,7 @@ def limpar_campos():
     indice_CUB_entry.delete(0, 'end')
     fmp_entry.delete(0, 'end')
     nome_indice_CUB_entry.delete(0, 'end')
-    
+
 
 def gerar_documento():
     nome_projeto = nome_projeto_entry.get()
@@ -123,8 +137,8 @@ def gerar_documento():
     area_a_construir = float(area_a_construir_entry.get().replace(',','.'))
     fmp = fmp_entry.get()
     nome_indice_CUB = nome_indice_CUB_entry.get()
-
     indice_CUB = indice_CUB_entry.get()
+
     if indice_CUB == '':
         indice_CUB = 1954.65
     else:
@@ -173,6 +187,7 @@ def gerar_documento():
         '''
         if cp > coeficiente_basico :
             resultado_bf = f'RESULTADO OBTIDO:  {formatar_num(bf)};  CPC = {(cp):.2f}'
+
     elif zona == 2:
         ic = 0.33
         coeficiente_projeto = 3.0
@@ -197,17 +212,15 @@ def gerar_documento():
     elif zona > 2 or zona < 1:
         messagebox.showinfo('\nERRO! Zona invalida!!\n') 
 
-    if cp <= coeficiente_basico or cp <= 2.5:
+    if cp <= 2.5:
         resultado_bf = f'Resultado do CP menor que 2.5, Não é necessario pagar a ODC; CPC = {(cp):.2f}'
         # Verificar a resposta 
         messagebox.showinfo("Título da Mensagem", resultado_bf)
-            
-    
-
 
     #tipo 1
     taxa_eiv = 0.025
     nr_vr = valor_referencia
+
     # float(input('Qual o valor do multiplicador referente ao valor de referencia ( nº x FMP / m² = VR )\nQual o valor de nº?\n').replace(',','.'))
     vr_eiv = round(fmp * nr_vr, 2)
         
@@ -216,7 +229,7 @@ def gerar_documento():
     dados_eiv = f'''
         ÁREA DO TERRENO(At) = {'{:,.2f}'.format(area_terreno).replace(',', '.')} m²
         ÁREA Á CONSTRUIR(Ac) = {'{:,.2f}'.format(area_a_construir).replace(',', '.')}m²
-        VR = VALOR DE REFERENCIA = {nr_vr} FMP/m² = R$ {vr_eiv}
+        VR = VALOR DE REFERENCIA = {nr_vr} FMP/m² = R$ {vr_eiv:.2f}
         TAXA EIV/RIT - TIPO 1 = 2,5%
         Índice – {nome_indice_CUB} ({data_indice_CUB(nova_data)})  – CUB / SINDUSCON = R$ {indice_CUB}
         FMP = R$ {fmp}
@@ -312,7 +325,7 @@ def gerar_documento():
 
 
     # add titulo
-    titulo = documento.add_paragraph(f"MEMORIAL DE CALCULOS BASICOS PARA OODC E EIV/RIT-TIPO I-LEI 9.924/16 PROJETO {nome_projeto.upper()}", style = "Titulo") 
+    titulo = documento.add_paragraph(f"MEMORIAL DE CALCULOS BASICOS PARA OODC E EIV/RIT-TIPO I-LEI 9.924/16\nPROJETO {nome_projeto.upper()}", style = "Titulo") 
     # Alinhe o parágrafo no centro
     titulo.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
     # add paragrafos
@@ -404,35 +417,35 @@ tk.Label(root, text="Valor Referência (FMP/m²):").grid(row=3, column=0, sticky
 valor_referencia_entry = tk.Entry(root)
 valor_referencia_entry.grid(row=3, column=1, padx=5, pady=5)
 
-tk.Label(root, text="Zona (1 ou 2):").grid(row=4, column=0, sticky="e", padx=5, pady=5)
-zona_entry = tk.Entry(root)
-zona_entry.grid(row=4, column=1, padx=5, pady=5)
 
-tk.Label(root, text="área a construir:").grid(row=5, column=0, sticky="e", padx=5, pady=5)
-area_a_construir_entry = tk.Entry(root)
-area_a_construir_entry.grid(row=5, column=1, padx=5, pady=5)
-
-toggle_button_CUB = tk.Button(root, text="Alterar o índice\nCUB/SINDUSCON?\nAtual = R$ 1954.65", command=toggle_campo_CUB, bg="dark grey", bd=4, relief=tk.RAISED)
-toggle_button_CUB.grid(row=3, column=2, padx=5, pady=5)
-
-
-# Configurar coluna para expansão
-root.columnconfigure(4, weight=1)
-
-# Campo de preenchimento inicialmente oculto
+tk.Label(root, text="Índice CUB/SINDUSCON (R$):").grid(row=4, column=0, sticky="e", padx=5, pady=5)
 indice_CUB_entry = tk.Entry(root)
-indice_CUB_entry.grid(row=4, column=2, padx=5, pady=5)
-indice_CUB_entry.grid_remove()
+indice_CUB_entry.grid(row=4, column=1, padx=5, pady=5)
+
+texto_informativo = "Utilizando = 1954.65"
+
+# Entry com comportamento
+indice_CUB_entry = tk.Entry(root, fg='grey')
+indice_CUB_entry.insert(0, texto_informativo)
+indice_CUB_entry.bind('<FocusIn>', on_entry_click)
+indice_CUB_entry.bind('<FocusOut>', on_focus_out)
+indice_CUB_entry.grid(row=4, column=1, padx=5, pady=5)
+######################################################## FIM DO INDICE CUB
+
+tk.Label(root, text="Zona 1 ou 2").grid(row=5, column=0, sticky="e", padx=5, pady=5)
+zona_entry = tk.Entry(root)
+zona_entry.grid(row=5, column=1, padx=5, pady=5)
+
+tk.Label(root, text="área a construir:").grid(row=6, column=0, sticky="e", padx=5, pady=5)
+area_a_construir_entry = tk.Entry(root)
+area_a_construir_entry.grid(row=6, column=1, padx=5, pady=5)
+
 
 # Rótulo para o nome do índice
-nome_indice_label = tk.Label(root, text='Alterar nome do Índice (Índice padrão: R8N)')
-nome_indice_label.grid(row=5, column=2, padx=5, pady=5)
-nome_indice_label.grid_remove()
-
+nome_indice_button = tk.Button(root, text='Alterar nome do Índice\n(Índice utilizado: R8N)', command=toggle_campo_nome_CUB, bg="dark grey",  bd=4, relief=tk.RAISED)
+nome_indice_button.grid(row=4, column=2, padx=5, pady=5)
 # Campo para o nome do índice
 nome_indice_CUB_entry = tk.Entry(root)
-nome_indice_CUB_entry.grid(row=6, column=2, padx=5, pady=5)
-nome_indice_CUB_entry.grid_remove()
 
 
 # Botão para alternar o campo de preenchimento
